@@ -1,0 +1,14 @@
+# .gitignore para .NET y Node
+
+# Directorios de compilación .NET
+bin/
+obj/
+
+# Dependencias de Node (Frontend)
+node_modules/
+dist/
+
+# Archivos de usuario y VS Code
+.vscode/
+*.user
+*.suo
