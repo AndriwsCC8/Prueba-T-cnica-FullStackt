@@ -7,11 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GestionVentas.Infrastructure\GestionVentas.Infrastructure.csproj" />
     <ProjectReference Include="..\GestionVentas.Application\GestionVentas.Application.csproj" />
+    <ProjectReference Include="..\GestionVentas.Infrastructure\GestionVentas.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.5" />

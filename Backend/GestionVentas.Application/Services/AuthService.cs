@@ -1,4 +1,7 @@
-using GestionVentas.Application.Services.Auth.Models;
+using GestionVentas.Application.Interfaces;
+using GestionVentas.Application.Models;
+using GestionVentas.Domain.Entities;
+using GestionVentas.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -6,65 +9,83 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace GestionVentas.Application.Services.Auth
+namespace GestionVentas.Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<UsuarioIdentity> _userManager;
         private readonly IConfiguration _config;
 
-        public AuthService(UserManager<IdentityUser> userManager, IConfiguration config)
+        public AuthService(UserManager<UsuarioIdentity> userManager, IConfiguration config)
         {
-            // Inyección de dependencias: UserManager para Identity y IConfiguration para JWT
             _userManager = userManager;
             _config = config;
         }
 
-        public async Task<string> RegisterAsync(RegisterRequest request)
+        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
         {
-            var user = new IdentityUser
+            var user = new UsuarioIdentity
             {
-                // codigo de creación de usuario 
                 UserName = request.Email,
-                Email = request.Email
+                Email = request.Email,
+                Nombre = request.Nombre
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
 
             if (!result.Succeeded)
-                return string.Join(", ", result.Errors.Select(e => e.Description));
+            {
+                return new AuthResponse
+                {
+                    IsSuccess = false,
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description))
+                };
+            }
 
-            return "Usuario registrado correctamente";
+            return new AuthResponse
+            {
+                IsSuccess = true,
+                Message = "Usuario registrado correctamente"
+            };
         }
 
-        public async Task<string> LoginAsync(LoginRequest request)
+        public async Task<AuthResponse> LoginAsync(LoginRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
 
             if (user == null)
-                return "Usuario no encontrado";
+                return new AuthResponse { IsSuccess = false, Message = "Usuario no encontrado" };
 
-            if (!await _userManager.CheckPasswordAsync(user, request.Password))
-                return "Credenciales incorrectas";
+            var valid = await _userManager.CheckPasswordAsync(user, request.Password);
 
-            return GenerateToken(user);
+            if (!valid)
+                return new AuthResponse { IsSuccess = false, Message = "Credenciales inválidas" };
+
+            var token = await GenerateTokenAsync(user);
+
+            return new AuthResponse
+            {
+                IsSuccess = true,
+                Token = token,
+                Message = "Login exitoso"
+            };
         }
 
-        private string GenerateToken(IdentityUser user)
+        private async Task<string> GenerateTokenAsync(UsuarioIdentity user)
         {
-            // Generación de la clave de seguridad JWT usando la configuración
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? ""),
+                new Claim("nombre", user.Nombre)
+            };
+
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
-            ); 
+            );
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email!),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-                // Configura el Token con Issuer, Audience, Claims y la expiración de 2 horas
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],

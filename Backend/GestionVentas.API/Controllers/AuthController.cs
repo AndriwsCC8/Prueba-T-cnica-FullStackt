@@ -1,35 +1,42 @@
+using GestionVentas.Application.Interfaces;
+using GestionVentas.Application.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using GestionVentas.Application.Interfaces; // <-- ESTE ES EL USING CRÍTICO QUE RESUELVE EL ERROR
-using GestionVentas.Application.DTOs; // Para LoginRequest y RegisterRequest
-using System.Threading.Tasks;
 
-namespace GestionVentas.API.Controllers;
-
-[Route("api/[controller]")]
-[ApiController]
-public class AuthController : ControllerBase
+namespace GestionVentas.API.Controllers
 {
-    private readonly IAuthService _authService;
-
-    // Inyección de dependencia de IAuthService
-    public AuthController(IAuthService authService) 
+    [AllowAnonymous]   // 🔥 IMPORTANTE
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _authService = authService;
-    }
+        private readonly IAuthService _authService;
 
-    public IAuthService AuthService => _authService;
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        var token = await AuthService.LoginAsync(request: request);
-
-        if (string.IsNullOrEmpty(token))
+        public AuthController(IAuthService authService)
         {
-            return Unauthorized("Credenciales inválidas.");
+            _authService = authService;
         }
 
-        return Ok(new { token });
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterRequest request)
+        {
+            var result = await _authService.RegisterAsync(request);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginRequest request)
+        {
+            var result = await _authService.LoginAsync(request);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
-  
 }

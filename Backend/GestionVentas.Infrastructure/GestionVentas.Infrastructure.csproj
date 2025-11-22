@@ -7,18 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\GestionVentas.Domain\GestionVentas.Domain.csproj" />
-    <ProjectReference Include="..\GestionVentas.Application\GestionVentas.Application.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.5" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.5" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
+    <ProjectReference Include="..\GestionVentas.Domain\GestionVentas.Domain.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,11 +1,11 @@
-using GestionVentas.Application.Services.Auth.Models;
+using GestionVentas.Application.Models;
+using System.Threading.Tasks;
 
 namespace GestionVentas.Application.Interfaces
 {
     public interface IAuthService
     {
-        Task<string> RegisterAsync(RegisterRequest request);
-        Task<string> LoginAsync(LoginRequest request);
-        Task<string?> LoginAsync(DTOs.LoginRequest request);
+        Task<AuthResponse> RegisterAsync(RegisterRequest request);
+        Task<AuthResponse> LoginAsync(LoginRequest request);
     }
 }

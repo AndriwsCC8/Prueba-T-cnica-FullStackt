@@ -1,33 +1,44 @@
 using GestionVentas.Domain.Entities;
 using GestionVentas.Domain.Interfaces;
-using GestionVentas.Infrastructure.Context;
+using GestionVentas.Infrastructure.Data;
 
-namespace GestionVentas.Infrastructure.Repositories;
-
-public class UnitOfWork : IUnitOfWork
+namespace GestionVentas.Infrastructure.Repositories
 {
-    private readonly ApplicationDbContext _context;
-    private IGenericRepository<Producto>? _productos;
-    private IGenericRepository<Cliente>? _clientes;
-
-    public UnitOfWork(ApplicationDbContext context)
+    public class UnitOfWork(AppDbContext context) : IUnitOfWork
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context = context;
 
-    public IGenericRepository<Producto> Productos => 
-        _productos ??= new GenericRepository<Producto>(_context);
+        // Repositorios genéricos
+#pragma warning disable CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+        public IGenericRepository<Producto>? Productos { get; private set; }
+#pragma warning restore CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+#pragma warning disable CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+        public IGenericRepository<Cliente>? Clientes { get; private set; }
+#pragma warning restore CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+#pragma warning disable CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+        public IGenericRepository<Venta>? Ventas { get; private set; }
+#pragma warning restore CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+#pragma warning disable CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
+        public IGenericRepository<DetalleVenta>? DetallesVenta { get; private set; }
+#pragma warning restore CS8766 // La nulabilidad de los tipos de referencia del tipo de valor devuelto no coincide con el miembro implementado de forma implícita (posiblemente debido a los atributos de nulabilidad).
 
-    public IGenericRepository<Cliente> Clientes => 
-        _clientes ??= new GenericRepository<Cliente>(_context);
+        // Inicializar repos genéricos
+        public void InitializeRepositories()
+        {
+            Productos = new GenericRepository<Producto>(_context);
+            Clientes = new GenericRepository<Cliente>(_context);
+            Ventas = new GenericRepository<Venta>(_context);
+            DetallesVenta = new GenericRepository<DetalleVenta>(_context);
+        }
 
-    public async Task<int> CompleteAsync()
-    {
-        return await _context.SaveChangesAsync();
-    }
+        public async Task<int> CompleteAsync()
+        {
+            return await _context.SaveChangesAsync();
+        }
 
-    public void Dispose()
-    {
-        _context.Dispose();
+        public void Dispose()
+        {
+            _context.Dispose();
+        }
     }
 }

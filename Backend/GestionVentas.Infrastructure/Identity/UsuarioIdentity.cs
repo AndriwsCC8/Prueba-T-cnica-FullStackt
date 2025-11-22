@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace GestionVentas.Infrastructure.Identity
+namespace GestionVentas.Infrastructure.Identity;
+
+public class UsuarioIdentity : IdentityUser<int>
 {
-    public class UsuarioIdentity : IdentityUser<int>
-    {
-        
-        public string Nombre { get; set; } = "";
-    }
+    public string Nombre { get; set; } = string.Empty;
 }

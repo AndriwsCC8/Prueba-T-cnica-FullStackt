@@ -7,4 +7,5 @@ public class LoginRequest
 
     // La contraseña del usuario
     public string? Password { get; set; }
+    public required string Email { get; set; }
 }
