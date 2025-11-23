@@ -1,6 +1,4 @@
 using GestionVentas.Application.Interfaces;
-using GestionVentas.Application.Models;
-using GestionVentas.Domain.Entities;
 using GestionVentas.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +6,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using GestionVentas.Application.DTOs;
+using System.Linq; 
+using System.Collections.Generic; // Para List<Claim>
 
 namespace GestionVentas.Application.Services
 {
@@ -34,32 +35,29 @@ namespace GestionVentas.Application.Services
             var result = await _userManager.CreateAsync(user, request.Password);
 
             if (!result.Succeeded)
-            {
                 return new AuthResponse
                 {
                     IsSuccess = false,
-                    Message = string.Join(", ", result.Errors.Select(e => e.Description))
+                    Message = string.Join(", ", result.Errors.Select(e => e.Description)),
+                    Token = null 
                 };
-            }
 
-            return new AuthResponse
-            {
-                IsSuccess = true,
-                Message = "Usuario registrado correctamente"
-            };
+            return new AuthResponse { IsSuccess = true, Message = "Usuario registrado correctamente", Token = null }; 
         }
 
         public async Task<AuthResponse> LoginAsync(LoginRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
-
+            
+            // CORRECCIÓN: Si el usuario no existe, IsSuccess es FALSE
             if (user == null)
-                return new AuthResponse { IsSuccess = false, Message = "Usuario no encontrado" };
+                return new AuthResponse { IsSuccess = false, Message = "Usuario no encontrado", Token = null }; 
 
             var valid = await _userManager.CheckPasswordAsync(user, request.Password);
-
+            
+            // CORRECCIÓN: Si la contraseña es incorrecta, IsSuccess es FALSE
             if (!valid)
-                return new AuthResponse { IsSuccess = false, Message = "Credenciales inválidas" };
+                return new AuthResponse { IsSuccess = false, Message = "Contraseña incorrecta", Token = null };
 
             var token = await GenerateTokenAsync(user);
 
@@ -71,7 +69,7 @@ namespace GestionVentas.Application.Services
             };
         }
 
-        private async Task<string> GenerateTokenAsync(UsuarioIdentity user)
+        private Task<string> GenerateTokenAsync(UsuarioIdentity user)
         {
             var claims = new List<Claim>
             {
@@ -80,21 +78,18 @@ namespace GestionVentas.Application.Services
                 new Claim("nombre", user.Nombre)
             };
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
-            );
-
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddHours(3),
                 signingCredentials: creds
             );
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
         }
     }
 }

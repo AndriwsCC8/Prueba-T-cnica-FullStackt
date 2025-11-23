@@ -1,0 +1,17 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "compat-api/css": [
+      "default",
+      {
+        "ignore": [
+          "-webkit-text-size-adjust",
+          "color: color-mix(in oklab, currentcolor 50%, transparent)",
+          "text-align: -webkit-match-parent"
+        ]
+      }
+    ]
+  }
+}

@@ -1,9 +1,10 @@
 using GestionVentas.Application.Services;
 using GestionVentas.Application.DTOs.Product;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestionVentas.API.Controllers;
-
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase

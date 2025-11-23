@@ -1,4 +1,4 @@
-namespace GestionVentas.Application.DTOs;
+/*namespace GestionVentas.Application.DTOs;
 
 public class LoginRequest
 {
@@ -8,4 +8,4 @@ public class LoginRequest
     // La contraseña del usuario
     public string? Password { get; set; }
     public required string Email { get; set; }
-}
+}*/

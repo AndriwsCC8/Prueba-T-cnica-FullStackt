@@ -5,67 +5,112 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using GestionVentas.Application.Services;
 using GestionVentas.Application.Interfaces;
+using GestionVentas.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext correcto (ESTE SÍ EXISTE)
+// === Database ===
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Registro de Services
+// === Identity ===
+builder.Services.AddIdentity<UsuarioIdentity, IdentityRole<int>>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// === JWT ===
+var key = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key no configurado.");
+var issuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer no configurado.");
+var audience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience no configurado.");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+    };
+});
+
+// === Services ===
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<VentaService>();
 builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<ClienteService>();
-
-
-
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 builder.Services.AddControllers();
 
-
-// Swagger
+// === Swagger ===
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo 
-    { 
-        Title = "GestionVentas API", 
-        Version = "v1" 
-    });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "GestionVentas API",
+        Version = "v1"
+    });
 });
 
+// === CORS ===
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowVue",
-        policy =>
-        {
-            policy.AllowAnyOrigin()       // Este es el Cors, para permitir el frontend fusionarse con el backend 
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowVue",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
 });
-
-
-
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
+
+// Redirección HTTPs
 app.UseHttpsRedirection();
 
-// app.UseAuthentication();
-// app.UseAuthorization();
+//CORS 
+app.UseCors("AllowVue");
 
+ 
+// Esto busca index.html en wwwroot, reescribe la ruta, y StaticFiles lo sirve.
+app.UseDefaultFiles(); 
+app.UseStaticFiles();
+
+//  Swagger 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseRouting();
+
+//  Autenticación y Autorización
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Mapeo de Controladores de API
 app.MapControllers();
 
-app.UseCors("AllowVue"); //CORS permitido
-
+//fallback
+app.MapFallbackToFile("index.html");
 
 app.Run();

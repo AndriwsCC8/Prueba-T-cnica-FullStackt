@@ -1,42 +1,32 @@
+// GestionVentas.API/Controllers/AuthController.cs (CORREGIDO)
+using GestionVentas.Application.DTOs;
 using GestionVentas.Application.Interfaces;
-using GestionVentas.Application.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-namespace GestionVentas.API.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [AllowAnonymous]   // 🔥 IMPORTANTE
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
     {
-        private readonly IAuthService _authService;
+        _authService = authService;
+    }
 
-        public AuthController(IAuthService authService)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest model)
+    {
+        var result = await _authService.LoginAsync(model);
+
+        // ¡CORRECCIÓN AQUÍ! Cambiar result.Success por result.IsSuccess
+        if (result.IsSuccess) 
         {
-            _authService = authService;
+            return Ok(result); 
         }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequest request)
-        {
-            var result = await _authService.RegisterAsync(request);
-
-            if (!result.IsSuccess)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginRequest request)
-        {
-            var result = await _authService.LoginAsync(request);
-
-            if (!result.IsSuccess)
-                return BadRequest(result);
-
-            return Ok(result);
-        }
+        
+        // ¡CORRECCIÓN AQUÍ! Cambiar result.Success por result.IsSuccess
+        return Unauthorized(result); 
     }
 }
